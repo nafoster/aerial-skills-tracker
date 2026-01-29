@@ -188,6 +188,7 @@ export default function SkillTable({
   columnsConfig,
   initialRows,
   selectedApparatus = "",
+  readOnly = true,
 }) {
   const [mobileFiltersOpen, setMobileFiltersOpen] = React.useState(false);
 
@@ -250,6 +251,18 @@ export default function SkillTable({
     }
   });
 
+  // Load saved table data from Supabase (public read)
+  React.useEffect(() => {
+    fetch("/api/skills")
+      .then((r) => r.json())
+      .then((rows) => {
+        if (Array.isArray(rows)) setData(rows);
+      })
+      .catch(() => {
+        // fall back silently to localStorage/initialRows
+      });
+  }, []);
+
   const [columnFilters, setColumnFilters] = React.useState([]);
 
   // Persist to localStorage whenever data changes
@@ -260,6 +273,21 @@ export default function SkillTable({
       // ignore storage errors
     }
   }, [data]);
+
+// Save edits to Supabase (admin-only write). Debounced to avoid saving on every keystroke.
+  React.useEffect(() => {
+    if (readOnly) return;
+
+    const id = setTimeout(() => {
+      fetch("/api/skills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }).catch(() => {});
+    }, 500);
+
+    return () => clearTimeout(id);
+  }, [data, readOnly]);
 
   // Build TanStack columns from config
   const columns = React.useMemo(() => {
@@ -275,6 +303,16 @@ export default function SkillTable({
           const rowIndex = row.index;
           const currentValue = getValue();
 
+          // Viewers see plain text only
+          if (readOnly) {
+            return (
+              <div className="text-xs sm:text-sm text-gray-800">
+                {String(currentValue ?? "")}
+              </div>
+            );
+          }
+
+          // Admin can edit
           return (
             <CellEditor
               value={currentValue}
@@ -348,18 +386,21 @@ export default function SkillTable({
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           <button
-            className="rounded bg-black px-3 py-2 text-sm font-medium text-white"
+            disabled={readOnly}
+            className="rounded bg-black px-3 py-2 text-sm font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={addRow}
           >
             + Add row
           </button>
 
-          <button
-            className="rounded border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50"
+                    <button
+            disabled={readOnly}
+            className="rounded border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={resetTable}
           >
             Reset
           </button>
+
 
           <button
             className="rounded border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 sm:hidden"
@@ -441,12 +482,14 @@ export default function SkillTable({
                     })}
 
                     <td className={`px-2 py-2 sm:px-3 ${rowBg}`}>
-                      <button
-                        className="rounded border border-gray-300 px-2 py-1 text-[11px] sm:text-xs hover:bg-gray-50"
+                                            <button
+                        disabled={readOnly}
+                        className="rounded border border-gray-300 px-2 py-1 text-[11px] sm:text-xs hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                         onClick={() => deleteRow(row.index)}
                       >
                         Delete
                       </button>
+
                     </td>
                   </tr>
                 );
