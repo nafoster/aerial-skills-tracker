@@ -12,7 +12,7 @@ export default function Home() {
 
   // check admin cookie on load
   React.useEffect(() => {
-    fetch("/api/admin")
+    fetch(`/api/admin?ts=${Date.now()}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => setIsAdmin(Boolean(j?.isAdmin)))
       .catch(() => {});

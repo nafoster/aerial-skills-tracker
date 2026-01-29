@@ -191,6 +191,8 @@ export default function SkillTable({
   readOnly = true,
 }) {
   const [mobileFiltersOpen, setMobileFiltersOpen] = React.useState(false);
+  const [saveStatus, setSaveStatus] = React.useState("idle"); // idle | saving | saved | error
+const savedTimerRef = React.useRef(null);
 
   const effectiveColumnsConfig = React.useMemo(() => {
     if (Array.isArray(columnsConfig) && columnsConfig.length) return columnsConfig;
@@ -253,17 +255,21 @@ export default function SkillTable({
 
   // Load saved table data from Supabase (public read)
   React.useEffect(() => {
-    fetch("/api/skills")
+    fetch(`/api/skills?ts=${Date.now()}`, { cache: "no-store", credentials: "include" })
       .then((r) => r.json())
       .then((rows) => {
-        if (Array.isArray(rows)) setData(rows);
-      })
+  // Only replace local state if Supabase actually has rows
+  if (Array.isArray(rows) && rows.length > 0) {
+    setData(rows);
+  }
+})
       .catch(() => {
         // fall back silently to localStorage/initialRows
       });
   }, []);
 
   const [columnFilters, setColumnFilters] = React.useState([]);
+  
 
   // Persist to localStorage whenever data changes
   React.useEffect(() => {
@@ -275,19 +281,33 @@ export default function SkillTable({
   }, [data]);
 
 // Save edits to Supabase (admin-only write). Debounced to avoid saving on every keystroke.
-  React.useEffect(() => {
-    if (readOnly) return;
+React.useEffect(() => {
+  if (readOnly) return;
 
-    const id = setTimeout(() => {
-      fetch("/api/skills", {
+  setSaveStatus("saving");
+
+  const id = setTimeout(async () => {
+    try {
+      const res = await fetch("/api/skills", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-      }).catch(() => {});
-    }, 500);
+      });
 
-    return () => clearTimeout(id);
-  }, [data, readOnly]);
+      if (!res.ok) throw new Error(await res.text());
+
+      setSaveStatus("saved");
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 1500);
+    } catch (e) {
+      console.error("Save failed:", e);
+      setSaveStatus("error");
+    }
+  }, 500);
+
+  return () => clearTimeout(id);
+}, [data, readOnly]);
+
 
   // Build TanStack columns from config
   const columns = React.useMemo(() => {
@@ -334,7 +354,7 @@ export default function SkillTable({
         filterFn: "includesString",
       };
     });
-  }, [effectiveColumnsConfig]);
+  }, [effectiveColumnsConfig, readOnly]);
 
   const table = useReactTable({
     data,
@@ -408,11 +428,35 @@ export default function SkillTable({
           >
             Filters
           </button>
+
+          {!readOnly && (
+  <span
+    className={[
+      "rounded border px-2 py-1 text-xs",
+      saveStatus === "saving"
+        ? "bg-yellow-50 text-yellow-800 border-yellow-200"
+        : saveStatus === "saved"
+        ? "bg-green-50 text-green-800 border-green-200"
+        : saveStatus === "error"
+        ? "bg-red-50 text-red-800 border-red-200"
+        : "bg-gray-50 text-gray-700 border-gray-200",
+    ].join(" ")}
+  >
+    {saveStatus === "saving"
+      ? "Saving…"
+      : saveStatus === "saved"
+      ? "Saved"
+      : saveStatus === "error"
+      ? "Save failed"
+      : "—"}
+  </span>
+)}
+
         </div>
 
-        <div className="text-xs text-gray-600 sm:text-sm">
+        {/*<div className="text-xs text-gray-600 sm:text-sm">
           Edits save automatically to this browser (localStorage) and persist after refresh.
-        </div>
+        </div>*/}
       </div>
 
       {/* Table wrapper */}

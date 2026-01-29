@@ -1,22 +1,24 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function supabaseServer() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("Missing Supabase env vars");
+  if (!url || !key) throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
   return createClient(url, key);
 }
 
-function isAdmin() {
-  const cookieStore = cookies();
-  return cookieStore.get("isAdmin")?.value === "1";
+function isAdminFromRequest(request) {
+  return request.cookies.get("isAdmin")?.value === "1";
 }
 
 export async function GET() {
   try {
     const supabase = supabaseServer();
+
     const { data, error } = await supabase
       .from("skills_state")
       .select("data")
@@ -27,20 +29,17 @@ export async function GET() {
 
     return NextResponse.json(Array.isArray(data?.data) ? data.data : []);
   } catch (e) {
-    return NextResponse.json(
-      { error: String(e?.message ?? e) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: String(e?.message ?? e) }, { status: 500 });
   }
 }
 
-export async function POST(req) {
+export async function POST(request) {
   try {
-    if (!isAdmin()) {
+    if (!isAdminFromRequest(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
     if (!Array.isArray(body)) {
       return NextResponse.json({ error: "Expected an array" }, { status: 400 });
     }
@@ -56,9 +55,6 @@ export async function POST(req) {
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json(
-      { error: String(e?.message ?? e) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: String(e?.message ?? e) }, { status: 500 });
   }
 }

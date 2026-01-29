@@ -11,28 +11,47 @@ export default function Navbar({
   const tabs = ["Trapeze", "Hoop", "Silks", "Pole"];
   const [busy, setBusy] = React.useState(false);
 
-  async function unlock() {
-    const password = window.prompt("Enter admin passcode to edit:");
-    if (!password) return;
+async function unlock() {
+  const password = window.prompt("Enter admin passcode to edit:");
+  if (!password) return;
 
-    setBusy(true);
-    try {
-      const res = await fetch("/api/auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
+  setBusy(true);
+  try {
+    const res = await fetch("/api/auth", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  cache: "no-store",
+  credentials: "include",
+  body: JSON.stringify({ password }),
+});
 
-      if (!res.ok) {
-        alert("Wrong passcode.");
-        return;
-      }
-
-      onAdminChange(true);
-    } finally {
-      setBusy(false);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.error("Unlock failed (/api/auth):", res.status, text);
+      alert("Unlock failed. Check console for details.");
+      return;
     }
+
+    // ✅ Verify cookie actually set (and avoid cached response)
+const check = await fetch(`/api/admin?ts=${Date.now()}`, {
+  cache: "no-store",
+  credentials: "include",
+});
+
+    if (!check.ok) {
+      const text = await check.text().catch(() => "");
+      console.error("Admin check failed (/api/admin):", check.status, text);
+      alert("Admin check failed. Check console for details.");
+      return;
+    }
+
+    const json = await check.json();
+    onAdminChange(Boolean(json?.isAdmin));
+  } finally {
+    setBusy(false);
   }
+}
+
 
   async function logout() {
     setBusy(true);

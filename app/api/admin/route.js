@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
-export async function GET() {
-  const isAdmin = cookies().get("isAdmin")?.value === "1";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+export async function GET(request) {
+  // Read cookie from the request (reliable)
+  const isAdmin = request.cookies.get("isAdmin")?.value === "1";
   return NextResponse.json({ isAdmin });
 }
