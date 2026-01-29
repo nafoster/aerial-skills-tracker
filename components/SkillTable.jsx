@@ -413,13 +413,13 @@ React.useEffect(() => {
             + Add row
           </button>
 
-                    <button
+                    {/*<button
             disabled={readOnly}
             className="rounded border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={resetTable}
           >
             Reset
-          </button>
+          </button>*/}
 
 
           <button
