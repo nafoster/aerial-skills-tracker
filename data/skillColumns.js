@@ -1,0 +1,35 @@
+export const skillColumns = [
+  { key: "apparatus", header: "Apparatus", type: "text" },
+  { key: "skill", header: "Skill", type: "text" },
+  {
+    key: "level",
+    header: "Level",
+    type: "select",
+    options: ["Beginner", "Intermediate", "Advanced"],
+  },
+  {
+    key: "focus",
+    header: "Focus",
+    type: "select",
+    options: [
+      "Technique",
+      "Core",
+      "Core/Balance",
+      "Balance",
+      "Strength",
+      "Flexibility/Lines",
+      "Legs/Strength",
+      "Roll",
+      "Balance/Hips",
+    ],
+  },
+  { key: "confidence", header: "Confidence (1–5)", type: "number" },
+  { key: "difficulty", header: "Difficulty (1–5)", type: "number" },
+  {
+    key: "status",
+    header: "Status",
+    type: "select",
+    options: ["Not Started", "Learning", "Can Perform", "Mastered"],
+  },
+  { key: "notes", header: "Notes / Progress", type: "text" },
+];
