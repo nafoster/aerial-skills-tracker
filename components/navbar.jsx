@@ -64,9 +64,9 @@ const check = await fetch(`/api/admin?ts=${Date.now()}`, {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white">
+    <header className="sticky top-0 z-50 w-full border-b border-pink-100 bg-white/80 backdrop-blur">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-        <div className="text-lg font-semibold sm:text-xl">Aerial Skills</div>
+        <div className="text-lg font-semibold sm:text-xl text-slate-900">Aerial Skills</div>
 
         <div className="flex items-center gap-3">
           <nav className="flex items-center gap-2">
@@ -74,10 +74,11 @@ const check = await fetch(`/api/admin?ts=${Date.now()}`, {
               type="button"
               onClick={() => onSelectApparatus("")}
               className={[
-                "rounded px-3 py-2 text-sm",
+                "rounded-full px-3 py-2 text-sm transition",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 focus-visible:ring-offset-2",
                 selectedApparatus === ""
-                  ? "bg-black text-white"
-                  : "text-gray-700 hover:bg-gray-100",
+                  ? "bg-pink-600 text-white shadow-sm"
+    : "text-slate-700 hover:bg-pink-50",
               ].join(" ")}
             >
               All
@@ -108,7 +109,7 @@ const check = await fetch(`/api/admin?ts=${Date.now()}`, {
               className="rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
               title="You are in edit mode"
             >
-              Editing ✓
+              Admin Editing ✓
             </button>
           ) : (
             <button
@@ -118,7 +119,7 @@ const check = await fetch(`/api/admin?ts=${Date.now()}`, {
               className="rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
               title="Unlock editing"
             >
-              Unlock
+              Admin Unlock
             </button>
           )}
         </div>

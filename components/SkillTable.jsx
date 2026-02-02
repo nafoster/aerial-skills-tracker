@@ -137,7 +137,8 @@ function MobileFilterDrawer({ open, onClose, table }) {
 
 function CellEditor({ value, onChange, columnType, options, min, max }) {
   const base =
-    "w-full rounded border border-gray-300 bg-white px-2 py-1 text-xs sm:text-sm";
+    "w-full rounded-lg border border-pink-200 bg-white px-2 py-1 text-xs sm:text-sm text-slate-900 " +
+  "focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-400";
 
   if (columnType === "select") {
     return (
